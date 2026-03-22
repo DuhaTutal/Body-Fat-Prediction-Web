@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vücut Yağ Oranı Tahmini</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f1419;
+            --bg-card: #1a2332;
+            --bg-input: #243044;
+            --accent: #00d4aa;
+            --accent-hover: #00b894;
+            --text: #e8ecf0;
+            --text-muted: #8b9aab;
+            --border: #2d3a4d;
+            --error: #ff6b6b;
+            --success: #00d4aa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 170, 0.12), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 212, 170, 0.06), transparent);
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-card {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .result-card.visible {
+            display: block;
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .result-value span {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            display: none;
+            padding: 1rem;
+            background: rgba(255, 107, 107, 0.15);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            border-radius: 10px;
+            color: var(--error);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .input-error {
+            border-color: var(--error) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Vücut Yağ Oranı Tahmini</h1>
+            <p class="subtitle">Kaggle Body Fat veri seti ile geliştirilmiş tahmin modeli</p>
+        </header>
+
+        <div class="card">
+            <form id="predictForm">
+                <div class="section-title">Kişisel Bilgiler</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Age">Yaş</label>
+                        <input type="number" id="Age" name="Age" placeholder="25" min="18" max="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Weight">Kilo (kg)</label>
+                        <input type="number" id="Weight" name="Weight" placeholder="75.5" step="0.1" min="30" max="200" required>
+                    </div>
+                </div>
+
+                <div class="section-title">Vücut Ölçüleri (cm)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Neck">Boyun</label>
+                        <input type="number" id="Neck" name="Neck" placeholder="35.2" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Chest">Göğüs</label>
+                        <input type="number" id="Chest" name="Chest" placeholder="99.5" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Abdomen">Karın / Bel</label>
+                        <input type="number" id="Abdomen" name="Abdomen" placeholder="85.2" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Hip">Kalça</label>
+                        <input type="number" id="Hip" name="Hip" placeholder="94.5" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Thigh">Uyluk</label>
+                        <input type="number" id="Thigh" name="Thigh" placeholder="59.0" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Knee">Diz</label>
+                        <input type="number" id="Knee" name="Knee" placeholder="38.5" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Ankle">Ayak Bileği</label>
+                        <input type="number" id="Ankle" name="Ankle" placeholder="22.5" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Biceps">Pazu</label>
+                        <input type="number" id="Biceps" name="Biceps" placeholder="32.0" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Forearm">Ön Kol</label>
+                        <input type="number" id="Forearm" name="Forearm" placeholder="28.5" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Wrist">Bilek</label>
+                        <input type="number" id="Wrist" name="Wrist" placeholder="18.2" step="0.1" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">Tahmin Et</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Hesaplanıyor...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="card result-card" id="resultCard">
+            <div class="result-label">Tahmin Edilen Vücut Yağ Oranı</div>
+            <div class="result-value" id="resultValue">-- <span>%</span></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+        const resultValue = document.getElementById('resultValue');
+        const errorMessage = document.getElementById('errorMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Reset state
+            errorMessage.classList.remove('visible');
+            resultCard.classList.remove('visible');
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (const [key, value] of formData) {
+                const numValue = key === 'Age' ? parseInt(value) : parseFloat(value);
+                if (isNaN(numValue)) {
+                    showError(`Lütfen "${key}" alanına geçerli bir sayı girin.`);
+                    document.getElementById(key)?.classList.add('input-error');
+                    return;
+                }
+                data[key] = numValue;
+            }
+
+            submitBtn.disabled = true;
+            loading.classList.add('visible');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    let errMsg = 'Bir hata oluştu.';
+                    if (result.detail) {
+                        errMsg = Array.isArray(result.detail) 
+                            ? result.detail.map(d => d.msg || JSON.stringify(d)).join('. ')
+                            : String(result.detail);
+                    } else if (result.message) errMsg = result.message;
+                    throw new Error(errMsg);
+                }
+
+                resultValue.textContent = result.predicted_body_fat.toFixed(1) + ' ';
+                resultCard.classList.add('visible');
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch (err) {
+                let msg = err.message;
+                if (err.message.includes('Failed to fetch')) {
+                    msg = 'Sunucuya bağlanılamadı. Uygulamanın çalıştığından emin olun.';
+                }
+                showError(msg);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('visible');
+            }
+        });
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.add('visible');
+        }
+    </script>
+</body>
+</html>
